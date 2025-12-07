@@ -11,7 +11,9 @@ namespace Api.Controllers
         private readonly ILoanService _loanService;
         private readonly ILogger<LoansController> _logger;
 
-        public LoansController(ILoanService loanService, ILogger<LoansController> logger)
+        public LoansController(
+            ILoanService loanService,
+            ILogger<LoansController> logger)
         {
             _loanService = loanService;
             _logger = logger;
@@ -38,26 +40,35 @@ namespace Api.Controllers
         public async Task<ActionResult<LoanDto>> Create([FromBody] CreateLoanDto dto)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             var created = await _loanService.CreateAsync(dto);
 
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = created.Id },
+                created
+            );
         }
 
         // PUT: api/loans/{id}
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<LoanDto>> Update(int id, [FromBody] UpdateLoanDto dto)
+        public async Task<ActionResult<LoanDto>> Update(
+            int id,
+            [FromBody] UpdateLoanDto dto)
         {
             if (!ModelState.IsValid)
+            {
                 return BadRequest(ModelState);
+            }
 
             var updated = await _loanService.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
         // PUT: api/loans/{id}/return
-        // Custom endpoint → Good for VG-level functionality
         [HttpPut("{id:int}/return")]
         public async Task<ActionResult<LoanDto>> ReturnBook(int id)
         {

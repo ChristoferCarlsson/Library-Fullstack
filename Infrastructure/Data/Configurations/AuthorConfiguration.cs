@@ -19,6 +19,7 @@ namespace Infrastructure.Data.Configurations
                    .HasMaxLength(100);
 
             builder.Property(a => a.Description)
+                    .IsRequired(false)
                    .HasMaxLength(500);
 
             // 🔥 IMPORTANT: Fix Book–Author relationship

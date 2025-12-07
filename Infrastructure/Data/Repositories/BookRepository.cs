@@ -42,6 +42,7 @@ namespace Infrastructure.Data.Repositories
         public async Task<Book?> GetByIdAsync(int id)
         {
             return await _context.Books
+                 .Include(b => b.Author)
                 .FirstOrDefaultAsync(b => b.Id == id);
         }
         public void Remove(Book book)

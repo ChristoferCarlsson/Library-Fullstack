@@ -9,9 +9,9 @@ using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Api.Middleware;
 
+Console.WriteLine(" PROGRAM LOADED FROM API PROJECT ");
 
 var builder = WebApplication.CreateBuilder(args);
-
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -23,6 +23,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LibraryDatabase"))
 );
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(LibraryProfile));
@@ -43,14 +46,18 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
+
 
 app.UseAuthorization();
 

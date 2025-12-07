@@ -21,9 +21,8 @@ public class DashboardControllerTests : IClassFixture<TestingWebApplicationFacto
 
         var dto = await response.Content.ReadFromJsonAsync<DashboardDto>();
         dto.Should().NotBeNull();
-
-        dto!.TotalBooks.Should().BeGreaterThanOrEqualTo(1);
-        dto.TotalMembers.Should().BeGreaterThanOrEqualTo(1);
+        dto!.TotalBooks.Should().BeGreaterThan(0);
+        dto.TotalMembers.Should().BeGreaterThan(0);
         dto.ActiveLoans.Should().BeGreaterThanOrEqualTo(0);
         dto.OverdueLoans.Should().BeGreaterThanOrEqualTo(0);
     }

@@ -48,7 +48,15 @@ public class BookServiceTests
         _authorRepo.Setup(r => r.GetByIdAsync(5))
                    .ReturnsAsync((Domain.Entities.Author?)null);
 
-        var dto = new CreateBookDto { AuthorId = 5 };
+        var dto = new CreateBookDto
+        {
+            Title = "Test",
+            ISBN = "TEST-ISBN",
+            PublishedDate = DateTime.UtcNow,
+            CopiesTotal = 1,
+            AuthorId = 5
+        };
+
 
         var act = async () => await _service.CreateAsync(dto);
 
@@ -61,7 +69,15 @@ public class BookServiceTests
         _bookRepo.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync((Domain.Entities.Book?)null);
 
-        var dto = new UpdateBookDto { AuthorId = 1 };
+        var dto = new UpdateBookDto
+        {
+            Title = "Updated",
+            ISBN = "UPDATED-ISBN",
+            PublishedDate = DateTime.UtcNow,
+            CopiesAvailable = 0,
+            CopiesTotal = 1,
+            AuthorId = 1
+        };
 
         var act = async () => await _service.UpdateAsync(1, dto);
 

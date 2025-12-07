@@ -15,6 +15,7 @@ namespace Infrastructure.Data.Configurations
                    .HasMaxLength(200);
 
             builder.Property(b => b.ISBN)
+                    .IsRequired()
                    .HasMaxLength(50);
 
             // 🔥 Explicitly define relationship again (optional but recommended)

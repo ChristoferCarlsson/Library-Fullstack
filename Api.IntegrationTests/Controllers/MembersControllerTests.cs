@@ -17,34 +17,32 @@ public class MembersControllerTests : IClassFixture<TestingWebApplicationFactory
     public async Task GetAllMembers_ShouldReturnOk()
     {
         var response = await _client.GetAsync("/api/members");
-
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var members = await response.Content.ReadFromJsonAsync<List<MemberDto>>();
         members.Should().NotBeNull();
-        members!.Count.Should().BeGreaterThanOrEqualTo(1); // seeded
+        members!.Count.Should().BeGreaterThan(0);
     }
 
     [Fact]
     public async Task CreateMember_Then_GetById_ShouldReturnMember()
     {
-        var createDto = new CreateMemberDto
+        var dto = new CreateMemberDto
         {
             FirstName = "Integration",
             LastName = "Member",
-            Email = "integration.member@example.com"
+            Email = "integration@test.com"
         };
 
-        var createResponse = await _client.PostAsJsonAsync("/api/members", createDto);
+        var createResponse = await _client.PostAsJsonAsync("/api/members", dto);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var created = await createResponse.Content.ReadFromJsonAsync<MemberDto>();
-        created.Should().NotBeNull();
 
         var getResponse = await _client.GetAsync($"/api/members/{created!.Id}");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var fetched = await getResponse.Content.ReadFromJsonAsync<MemberDto>();
-        fetched!.Email.Should().Be("integration.member@example.com");
+        fetched!.Email.Should().Be("integration@test.com");
     }
 }

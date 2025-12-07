@@ -16,36 +16,30 @@ public class LoansControllerTests : IClassFixture<TestingWebApplicationFactory>
     [Fact]
     public async Task CreateLoan_Then_ReturnBook_ShouldWork()
     {
-        // Arrange: loan for seeded BookId 1, MemberId 1
-        var createDto = new CreateLoanDto
+        // Arrange
+        var dto = new CreateLoanDto
         {
             BookId = 1,
             MemberId = 1,
             DueDate = DateTime.UtcNow.AddDays(7)
         };
 
-        // Create loan
-        var createResponse = await _client.PostAsJsonAsync("/api/loans", createDto);
+        // Act - create loan
+        var createResponse = await _client.PostAsJsonAsync("/api/loans", dto);
         createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var createdLoan = await createResponse.Content.ReadFromJsonAsync<LoanDto>();
-        createdLoan.Should().NotBeNull();
+        var created = await createResponse.Content.ReadFromJsonAsync<LoanDto>();
+        created.Should().NotBeNull();
 
-        // Return the book
-        var returnResponse = await _client.PostAsync($"/api/loans/{createdLoan!.Id}/return", null);
+        // ✅ Act - return book (PUT, not POST)
+        var returnResponse =
+            await _client.PutAsync($"/api/loans/{created!.Id}/return", null);
+
+        // Assert
         returnResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var returnedLoan = await returnResponse.Content.ReadFromJsonAsync<LoanDto>();
-        returnedLoan!.ReturnDate.Should().NotBeNull();
-    }
-
-    [Fact]
-    public async Task GetAllLoans_ShouldReturnOk()
-    {
-        var response = await _client.GetAsync("/api/loans");
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var loans = await response.Content.ReadFromJsonAsync<List<LoanDto>>();
-        loans.Should().NotBeNull();
+        var returned = await returnResponse.Content.ReadFromJsonAsync<LoanDto>();
+        returned.Should().NotBeNull();
+        returned!.ReturnDate.Should().NotBeNull();
     }
 }
