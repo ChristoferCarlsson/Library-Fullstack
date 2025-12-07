@@ -7,6 +7,7 @@ using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Api.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 

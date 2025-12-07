@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs
 {
@@ -7,10 +7,8 @@ namespace Application.DTOs
         public int Id { get; set; }
         public string Title { get; set; }
         public DateTime PublishedDate { get; set; }
-
         public int AuthorId { get; set; }
         public string AuthorFullName { get; set; }
-
         public string ISBN { get; set; }
         public int CopiesAvailable { get; set; }
         public int CopiesTotal { get; set; }
@@ -18,24 +16,42 @@ namespace Application.DTOs
 
     public class CreateBookDto
     {
+        [Required]
+        [MaxLength(200)]
         public string Title { get; set; }
+
+        [Required]
         public DateTime PublishedDate { get; set; }
 
+        [Required]
         public int AuthorId { get; set; }
 
+        [MaxLength(50)]
         public string ISBN { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "CopiesTotal must be at least 1.")]
         public int CopiesTotal { get; set; }
     }
 
     public class UpdateBookDto
     {
+        [Required]
+        [MaxLength(200)]
         public string Title { get; set; }
+
+        [Required]
         public DateTime PublishedDate { get; set; }
 
+        [Required]
         public int AuthorId { get; set; }
 
+        [MaxLength(50)]
         public string ISBN { get; set; }
+
+        [Range(0, int.MaxValue)]
         public int CopiesAvailable { get; set; }
+
+        [Range(1, int.MaxValue)]
         public int CopiesTotal { get; set; }
     }
 }

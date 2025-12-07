@@ -4,6 +4,7 @@ using Application.Interfaces.Repositories;
 using Application.Interfaces.Services;
 using AutoMapper;
 using Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services
 {
@@ -11,16 +12,22 @@ namespace Application.Services
     {
         private readonly IAuthorRepository _authorRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<AuthorService> _logger;
 
-        public AuthorService(IAuthorRepository authorRepository, IMapper mapper)
+        public AuthorService(
+            IAuthorRepository authorRepository,
+            IMapper mapper,
+            ILogger<AuthorService> logger)
         {
             _authorRepository = authorRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<List<AuthorDto>> GetAllAsync()
         {
             var authors = await _authorRepository.GetAllAsync();
+            _logger.LogInformation("Fetched {Count} authors", authors.Count);
             return _mapper.Map<List<AuthorDto>>(authors);
         }
 
@@ -28,8 +35,12 @@ namespace Application.Services
         {
             var author = await _authorRepository.GetByIdAsync(id);
             if (author == null)
+            {
+                _logger.LogWarning("Author with ID {Id} not found", id);
                 throw new NotFoundException($"Author with id {id} not found.");
+            }
 
+            _logger.LogInformation("Fetched author with ID {Id}", id);
             return _mapper.Map<AuthorDto>(author);
         }
 
@@ -40,6 +51,8 @@ namespace Application.Services
             await _authorRepository.AddAsync(author);
             await _authorRepository.SaveChangesAsync();
 
+            _logger.LogInformation("Created author with ID {Id}", author.Id);
+
             return _mapper.Map<AuthorDto>(author);
         }
 
@@ -47,12 +60,17 @@ namespace Application.Services
         {
             var author = await _authorRepository.GetByIdAsync(id);
             if (author == null)
+            {
+                _logger.LogWarning("Attempted update: Author with ID {Id} not found", id);
                 throw new NotFoundException($"Author with id {id} not found.");
+            }
 
             _mapper.Map(dto, author);
 
             _authorRepository.Update(author);
             await _authorRepository.SaveChangesAsync();
+
+            _logger.LogInformation("Updated author with ID {Id}", id);
 
             return _mapper.Map<AuthorDto>(author);
         }
@@ -61,10 +79,15 @@ namespace Application.Services
         {
             var author = await _authorRepository.GetByIdAsync(id);
             if (author == null)
+            {
+                _logger.LogWarning("Attempted delete: Author with ID {Id} not found", id);
                 throw new NotFoundException($"Author with id {id} not found.");
+            }
 
             _authorRepository.Remove(author);
             await _authorRepository.SaveChangesAsync();
+
+            _logger.LogWarning("Deleted author with ID {Id}", id);
         }
     }
 }
