@@ -73,6 +73,9 @@ namespace Application.Services
 
             var book = _mapper.Map<Book>(dto);
 
+            // 🔥 Set CopiesAvailable = CopiesTotal on creation
+            book.CopiesAvailable = dto.CopiesTotal;
+
             await _bookRepository.AddAsync(book);
             await _bookRepository.SaveChangesAsync();
 
@@ -97,7 +100,16 @@ namespace Application.Services
                 throw new NotFoundException($"Author with id {dto.AuthorId} not found.");
             }
 
+            // Update simple fields first
             _mapper.Map(dto, book);
+
+            // 🔥 Ensure CopiesAvailable does NOT exceed CopiesTotal
+            if (book.CopiesAvailable > dto.CopiesTotal)
+            {
+                book.CopiesAvailable = dto.CopiesTotal;
+            }
+
+            book.CopiesTotal = dto.CopiesTotal;
 
             _bookRepository.Update(book);
             await _bookRepository.SaveChangesAsync();
