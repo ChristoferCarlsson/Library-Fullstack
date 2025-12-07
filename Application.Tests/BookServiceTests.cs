@@ -31,9 +31,6 @@ public class BookServiceTests
         );
     }
 
-    // ------------------------
-    // GET BY ID
-    // ------------------------
     [Fact]
     public async Task GetById_ShouldThrow_WhenNotFound()
     {
@@ -45,9 +42,6 @@ public class BookServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    // ------------------------
-    // CREATE
-    // ------------------------
     [Fact]
     public async Task Create_ShouldThrow_WhenAuthorMissing()
     {
@@ -61,9 +55,6 @@ public class BookServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    // ------------------------
-    // UPDATE
-    // ------------------------
     [Fact]
     public async Task Update_ShouldThrow_WhenBookMissing()
     {
@@ -75,5 +66,8 @@ public class BookServiceTests
         var act = async () => await _service.UpdateAsync(1, dto);
 
         await act.Should().ThrowAsync<NotFoundException>();
+
+        _bookRepo.Verify(r => r.GetByIdAsync(1), Times.Once);
+        _authorRepo.VerifyNoOtherCalls();
     }
 }

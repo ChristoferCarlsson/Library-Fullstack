@@ -26,18 +26,22 @@ public class LoanServiceTests
         _mapper = mapperConfig.CreateMapper();
 
         _service = new LoanService(
-            _loanRepo.Object, _bookRepo.Object, _memberRepo.Object,
-            _mapper, Mock.Of<ILogger<LoanService>>());
+            _loanRepo.Object,
+            _bookRepo.Object,
+            _memberRepo.Object,
+            _mapper,
+            Mock.Of<ILogger<LoanService>>()
+        );
     }
 
-    // ------------------------
-    // CREATE LOAN
-    // ------------------------
     [Fact]
     public async Task Create_ShouldThrow_WhenBookUnavailable()
     {
         _bookRepo.Setup(r => r.GetByIdAsync(1))
             .ReturnsAsync(new Domain.Entities.Book { Id = 1, CopiesAvailable = 0 });
+
+        _memberRepo.Setup(r => r.GetByIdAsync(1))
+            .ReturnsAsync(new Domain.Entities.Member { Id = 1 });
 
         var dto = new CreateLoanDto { BookId = 1, MemberId = 1 };
 
@@ -62,9 +66,6 @@ public class LoanServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    // ------------------------
-    // RETURN BOOK
-    // ------------------------
     [Fact]
     public async Task ReturnBook_ShouldThrow_WhenAlreadyReturned()
     {

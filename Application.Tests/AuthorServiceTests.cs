@@ -21,12 +21,13 @@ public class AuthorServiceTests
             cfg.AddProfile<Application.Mapping.LibraryProfile>());
         _mapper = mapperConfig.CreateMapper();
 
-        _service = new AuthorService(_repoMock.Object, _mapper, Mock.Of<ILogger<AuthorService>>());
+        _service = new AuthorService(
+            _repoMock.Object,
+            _mapper,
+            Mock.Of<ILogger<AuthorService>>()
+        );
     }
 
-    // ------------------------
-    // GET BY ID
-    // ------------------------
     [Fact]
     public async Task GetById_ShouldReturnAuthor_WhenExists()
     {
@@ -50,9 +51,6 @@ public class AuthorServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    // ------------------------
-    // CREATE
-    // ------------------------
     [Fact]
     public async Task Create_ShouldAddAuthor()
     {
@@ -61,17 +59,17 @@ public class AuthorServiceTests
         _repoMock.Setup(r => r.AddAsync(It.IsAny<Domain.Entities.Author>()))
                  .Returns(Task.CompletedTask);
 
-        _repoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
+        _repoMock.Setup(r => r.SaveChangesAsync())
+                 .ReturnsAsync(true);
 
         var result = await _service.CreateAsync(dto);
 
         result.FullName.Should().Be("Jane Doe");
+
         _repoMock.Verify(r => r.AddAsync(It.IsAny<Domain.Entities.Author>()), Times.Once);
+        _repoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
 
-    // ------------------------
-    // UPDATE
-    // ------------------------
     [Fact]
     public async Task Update_ShouldThrow_WhenNotFound()
     {
@@ -85,9 +83,6 @@ public class AuthorServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
     }
 
-    // ------------------------
-    // DELETE
-    // ------------------------
     [Fact]
     public async Task Delete_ShouldRemoveAuthor()
     {

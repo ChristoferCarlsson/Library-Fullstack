@@ -9,7 +9,6 @@ public class DashboardServiceTests
     private readonly Mock<IBookRepository> _books;
     private readonly Mock<IMemberRepository> _members;
     private readonly Mock<ILoanRepository> _loans;
-    private readonly Mock<ILogger<DashboardService>> _logger;
     private readonly DashboardService _service;
 
     public DashboardServiceTests()
@@ -17,13 +16,12 @@ public class DashboardServiceTests
         _books = new Mock<IBookRepository>();
         _members = new Mock<IMemberRepository>();
         _loans = new Mock<ILoanRepository>();
-        _logger = new Mock<ILogger<DashboardService>>();
 
         _service = new DashboardService(
             _books.Object,
             _members.Object,
             _loans.Object,
-            _logger.Object
+            Mock.Of<ILogger<DashboardService>>()
         );
     }
 

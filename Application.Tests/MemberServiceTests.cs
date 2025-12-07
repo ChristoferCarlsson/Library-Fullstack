@@ -21,7 +21,11 @@ public class MemberServiceTests
             cfg.AddProfile<Application.Mapping.LibraryProfile>());
         _mapper = mapperConfig.CreateMapper();
 
-        _service = new MemberService(_repoMock.Object, _mapper, Mock.Of<ILogger<MemberService>>());
+        _service = new MemberService(
+            _repoMock.Object,
+            _mapper,
+            Mock.Of<ILogger<MemberService>>()
+        );
     }
 
     [Fact]
@@ -39,11 +43,11 @@ public class MemberServiceTests
     public async Task Delete_ShouldRemoveMember()
     {
         var member = new Domain.Entities.Member { Id = 1 };
-
         _repoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(member);
 
         await _service.DeleteAsync(1);
 
         _repoMock.Verify(r => r.Remove(member), Times.Once);
+        _repoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
 }

@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 
 public class TestingWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -13,83 +12,80 @@ public class TestingWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Remove SQL Server DbContext
+            // 1️⃣ Remove the existing DbContext registration
             var descriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<LibraryDbContext>)
             );
             if (descriptor != null)
                 services.Remove(descriptor);
 
-            // Add InMemory DbContext
+            // 2️⃣ Register a UNIQUE InMemory DB per test run (CI safe)
             services.AddDbContext<LibraryDbContext>(options =>
             {
-                options.UseInMemoryDatabase("TestDb");
+                options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
             });
 
-            // Build the service provider
+            // 3️⃣ Build the updated provider
             var sp = services.BuildServiceProvider();
 
-            // Seed test data
+            // 4️⃣ Seed the database
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<LibraryDbContext>();
+
             db.Database.EnsureCreated();
 
-            // ⭐⭐⭐ SEED DATA START ⭐⭐⭐
-
-            // Only seed if empty (prevents duplicates)
-            if (!db.Authors.Any())
-            {
-                db.Authors.Add(new Author
-                {
-                    Id = 1,
-                    FirstName = "John",
-                    LastName = "Doe",
-                    Description = "Test Author"
-                });
-            }
-
-            if (!db.Books.Any())
-            {
-                db.Books.Add(new Book
-                {
-                    Id = 1,
-                    Title = "Test Book",
-                    PublishedDate = DateTime.UtcNow.AddYears(-1),
-                    AuthorId = 1,
-                    ISBN = "TEST-ISBN-001",
-                    CopiesAvailable = 3,
-                    CopiesTotal = 3
-                });
-            }
-
-            if (!db.Members.Any())
-            {
-                db.Members.Add(new Member
-                {
-                    Id = 1,
-                    FirstName = "Jane",
-                    LastName = "Tester",
-                    Email = "test@example.com",
-                    JoinedAt = DateTime.UtcNow.AddMonths(-2)
-                });
-            }
-
-            if (!db.Loans.Any())
-            {
-                db.Loans.Add(new Loan
-                {
-                    Id = 1,
-                    BookId = 1,
-                    MemberId = 1,
-                    LoanDate = DateTime.UtcNow.AddDays(-5),
-                    DueDate = DateTime.UtcNow.AddDays(5),
-                    ReturnDate = null
-                });
-            }
-
-            db.SaveChanges();
-
-            // ⭐⭐⭐ SEED DATA END ⭐⭐⭐
+            SeedTestData(db);
         });
+    }
+
+    private static void SeedTestData(LibraryDbContext db)
+    {
+        // Avoid double-seeding (only needed if running locally)
+        if (db.Authors.Any())
+            return;
+
+        // Seed Authors
+        db.Authors.Add(new Author
+        {
+            Id = 1,
+            FirstName = "John",
+            LastName = "Doe",
+            Description = "Test Author"
+        });
+
+        // Seed Books
+        db.Books.Add(new Book
+        {
+            Id = 1,
+            Title = "Test Book",
+            PublishedDate = DateTime.UtcNow.AddYears(-1),
+            AuthorId = 1,
+            ISBN = "TEST-ISBN-001",
+            CopiesAvailable = 3,
+            CopiesTotal = 3
+        });
+
+        // Seed Members
+        db.Members.Add(new Member
+        {
+            Id = 1,
+            FirstName = "Jane",
+            LastName = "Tester",
+            Email = "test@example.com",
+            JoinedAt = DateTime.UtcNow.AddMonths(-2)
+        });
+
+        // Seed Loans
+        db.Loans.Add(new Loan
+        {
+            Id = 1,
+            BookId = 1,
+            MemberId = 1,
+            LoanDate = DateTime.UtcNow.AddDays(-5),
+            DueDate = DateTime.UtcNow.AddDays(5),
+            ReturnDate = null
+        });
+
+        db.SaveChanges();
     }
 }
