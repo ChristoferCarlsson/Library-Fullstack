@@ -47,7 +47,7 @@ namespace Infrastructure.Repositories
 
         public void Remove(Loan loan)
         {
-            throw new NotImplementedException();
+            _context.Loans.Remove(loan);
         }
     }
 }

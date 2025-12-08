@@ -43,5 +43,11 @@ namespace Infrastructure.Repositories
         {
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<List<Book>> GetBooksByAuthorIdAsync(int authorId)
+        {
+            return await _context.Books
+                .Where(b => b.AuthorId == authorId)
+                .ToListAsync();
+        }
     }
 }

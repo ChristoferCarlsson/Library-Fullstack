@@ -30,7 +30,16 @@ namespace Application.Services
 
             _logger.LogInformation("Fetched {Count} members", members.Count);
 
-            return _mapper.Map<List<MemberDto>>(members);
+            var dtoList = _mapper.Map<List<MemberDto>>(members);
+
+            // Inject loan count
+            foreach (var dto in dtoList)
+            {
+                var member = members.First(m => m.Id == dto.Id);
+                dto.LoanCount = member.Loans.Count(l => l.ReturnDate == null);
+            }
+
+            return dtoList;
         }
 
         public async Task<MemberDto> GetByIdAsync(int id)
@@ -43,9 +52,12 @@ namespace Application.Services
                 throw new NotFoundException($"Member with id {id} not found.");
             }
 
+            var dto = _mapper.Map<MemberDto>(member);
+            dto.LoanCount = member.Loans.Count(l => l.ReturnDate == null);
+
             _logger.LogInformation("Fetched member with ID {Id}", id);
 
-            return _mapper.Map<MemberDto>(member);
+            return dto;
         }
 
         public async Task<MemberDto> CreateAsync(CreateMemberDto dto)
@@ -57,7 +69,9 @@ namespace Application.Services
 
             _logger.LogInformation("Created member with ID {Id}", member.Id);
 
-            return _mapper.Map<MemberDto>(member);
+            var result = _mapper.Map<MemberDto>(member);
+            result.LoanCount = 0;
+            return result;
         }
 
         public async Task<MemberDto> UpdateAsync(int id, UpdateMemberDto dto)
@@ -75,9 +89,12 @@ namespace Application.Services
             _memberRepository.Update(member);
             await _memberRepository.SaveChangesAsync();
 
+            var result = _mapper.Map<MemberDto>(member);
+            result.LoanCount = member.Loans.Count(l => l.ReturnDate == null);
+
             _logger.LogInformation("Updated member with ID {Id}", id);
 
-            return _mapper.Map<MemberDto>(member);
+            return result;
         }
 
         public async Task DeleteAsync(int id)

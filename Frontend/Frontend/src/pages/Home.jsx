@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ ADD THIS
 import {
   Box,
   TextField,
@@ -13,6 +14,8 @@ import {
 import api from "../api/AxiosClient.js";
 
 export default function Home() {
+  const navigate = useNavigate(); // ✅ ADD THIS
+
   const [mode, setMode] = useState("books"); // books | authors
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -203,7 +206,11 @@ export default function Home() {
 
       {!loading &&
         results.map((item) => (
-          <Card key={item.id} sx={{ mb: 2 }}>
+          <Card
+            key={item.id}
+            sx={{ mb: 2, cursor: "pointer" }}
+            onClick={() => navigate(`/books/${item.id}`)}
+          >
             <CardContent>
               {mode === "books" ? (
                 <>

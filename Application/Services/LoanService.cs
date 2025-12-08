@@ -138,9 +138,19 @@ namespace Application.Services
                 throw new ValidationException("Book already returned.");
             }
 
-            loan.ReturnDate = DateTime.UtcNow;
-
             var book = await _bookRepository.GetByIdAsync(loan.BookId);
+            if (book == null) // ✅ THIS is what the compiler wanted
+            {
+                _logger.LogError(
+                    "Invariant violation: Book with ID {BookId} not found for Loan {LoanId}",
+                    loan.BookId,
+                    id);
+
+                throw new NotFoundException(
+                    $"Book with id {loan.BookId} not found for this loan.");
+            }
+
+            loan.ReturnDate = DateTime.UtcNow;
             book.CopiesAvailable++;
 
             _loanRepository.Update(loan);

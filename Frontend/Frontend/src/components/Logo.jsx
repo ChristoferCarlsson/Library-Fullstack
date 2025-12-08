@@ -16,7 +16,7 @@ export default function Logo() {
     >
       <Typography
         variant="h4"
-        sx={{ fontWeight: "bold" }}
+        sx={{ fontWeight: "bold", cursor: "pointer" }}
         onClick={() => navigate("/")}
       >
         📚 My Library

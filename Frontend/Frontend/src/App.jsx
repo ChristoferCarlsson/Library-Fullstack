@@ -9,6 +9,8 @@ import AdminBooks from "./pages/Admin/AdminBooks";
 import AdminAuthors from "./pages/Admin/AdminAuthors";
 import AdminMembers from "./pages/Admin/AdminMembers";
 
+import BookDetails from "./components/BookDetails";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -24,6 +26,9 @@ export default function App() {
         <Route path="/admin/books" element={<AdminBooks />} />
         <Route path="/admin/authors" element={<AdminAuthors />} />
         <Route path="/admin/members" element={<AdminMembers />} />
+
+        {/* Book details */}
+        <Route path="/books/:id" element={<BookDetails />} />
       </Routes>
     </BrowserRouter>
   );

@@ -22,6 +22,8 @@ export default function AdminBooks() {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  const [error, setError] = useState("");
+
   const today = new Date().toISOString().slice(0, 10);
 
   const [form, setForm] = useState({
@@ -63,6 +65,7 @@ export default function AdminBooks() {
   // -----------------------------------------------------------
   function openCreateModal() {
     setEditMode(false);
+    setError("");
     setForm({
       id: null,
       title: "",
@@ -75,16 +78,20 @@ export default function AdminBooks() {
   }
 
   async function createBook() {
-    await api.post("/books", {
-      title: form.title,
-      isbn: form.isbn,
-      authorId: Number(form.authorId),
-      publishedDate: form.publishedDate || today,
-      copiesTotal: Number(form.copiesTotal),
-    });
+    try {
+      await api.post("/books", {
+        title: form.title,
+        isbn: form.isbn,
+        authorId: Number(form.authorId),
+        publishedDate: form.publishedDate || today,
+        copiesTotal: Number(form.copiesTotal),
+      });
 
-    setOpen(false);
-    loadBooks();
+      setOpen(false);
+      loadBooks();
+    } catch (err) {
+      handleApiError(err);
+    }
   }
 
   // -----------------------------------------------------------
@@ -92,6 +99,7 @@ export default function AdminBooks() {
   // -----------------------------------------------------------
   function openEditModal(book) {
     setEditMode(true);
+    setError("");
     setForm({
       id: book.id,
       title: book.title,
@@ -104,16 +112,38 @@ export default function AdminBooks() {
   }
 
   async function updateBook() {
-    await api.put(`/books/${form.id}`, {
-      title: form.title,
-      isbn: form.isbn,
-      authorId: Number(form.authorId),
-      publishedDate: form.publishedDate || today,
-      copiesTotal: Number(form.copiesTotal),
-    });
+    try {
+      await api.put(`/books/${form.id}`, {
+        title: form.title,
+        isbn: form.isbn,
+        authorId: Number(form.authorId),
+        publishedDate: form.publishedDate || today,
+        copiesTotal: Number(form.copiesTotal),
+      });
 
-    setOpen(false);
-    loadBooks();
+      setOpen(false);
+      loadBooks();
+    } catch (err) {
+      handleApiError(err);
+    }
+  }
+
+  // -----------------------------------------------------------
+  // Handle API Validation Errors
+  // -----------------------------------------------------------
+  function handleApiError(err) {
+    console.log("Error response:", err);
+
+    if (err.response?.data?.errors) {
+      // ASP.NET Core validation dictionary
+      const firstKey = Object.keys(err.response.data.errors)[0];
+      setError(err.response.data.errors[firstKey][0]);
+    } else if (err.response?.data?.message) {
+      // Custom exceptions (NotFoundException, ValidationException, etc.)
+      setError(err.response.data.message);
+    } else {
+      setError("An unexpected error occurred.");
+    }
   }
 
   return (
@@ -158,6 +188,12 @@ export default function AdminBooks() {
         <DialogTitle>{editMode ? "Edit Book" : "Add Book"}</DialogTitle>
 
         <DialogContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              ⚠️ {error}
+            </Typography>
+          )}
+
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Title"

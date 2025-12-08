@@ -28,12 +28,14 @@ namespace Application.Services
         {
             var authors = await _authorRepository.GetAllAsync();
             _logger.LogInformation("Fetched {Count} authors", authors.Count);
+
             return _mapper.Map<List<AuthorDto>>(authors);
         }
 
         public async Task<AuthorDto> GetByIdAsync(int id)
         {
             var author = await _authorRepository.GetByIdAsync(id);
+
             if (author == null)
             {
                 _logger.LogWarning("Author with ID {Id} not found", id);
@@ -59,6 +61,7 @@ namespace Application.Services
         public async Task<AuthorDto> UpdateAsync(int id, UpdateAuthorDto dto)
         {
             var author = await _authorRepository.GetByIdAsync(id);
+
             if (author == null)
             {
                 _logger.LogWarning("Attempted update: Author with ID {Id} not found", id);
@@ -78,10 +81,25 @@ namespace Application.Services
         public async Task DeleteAsync(int id)
         {
             var author = await _authorRepository.GetByIdAsync(id);
+
             if (author == null)
             {
                 _logger.LogWarning("Attempted delete: Author with ID {Id} not found", id);
                 throw new NotFoundException($"Author with id {id} not found.");
+            }
+
+            var books = await _authorRepository.GetBooksByAuthorIdAsync(id);
+
+            if (books.Any())
+            {
+                _logger.LogWarning(
+                    "Cannot delete author {Id}: They still have {Count} books",
+                    id, books.Count
+                );
+
+                throw new ValidationException(
+                    "Cannot delete author because they still have books assigned."
+                );
             }
 
             _authorRepository.Remove(author);

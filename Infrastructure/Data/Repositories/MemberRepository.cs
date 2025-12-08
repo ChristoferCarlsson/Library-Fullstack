@@ -16,12 +16,16 @@ namespace Infrastructure.Repositories
 
         public async Task<List<Member>> GetAllAsync()
         {
-            return await _context.Members.ToListAsync();
+            return await _context.Members
+                .Include(m => m.Loans)
+                .ToListAsync();
         }
 
         public async Task<Member?> GetByIdAsync(int id)
         {
-            return await _context.Members.FindAsync(id);
+            return await _context.Members
+                .Include(m => m.Loans)
+                .FirstOrDefaultAsync(m => m.Id == id);
         }
 
         public async Task AddAsync(Member member)

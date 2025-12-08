@@ -20,6 +20,8 @@ export default function AdminMembers() {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  const [error, setError] = useState("");
+
   const [form, setForm] = useState({
     id: null,
     firstName: "",
@@ -51,6 +53,7 @@ export default function AdminMembers() {
   // ---------------------------------------------------------
   function openCreateModal() {
     setEditMode(false);
+    setError("");
     setForm({
       id: null,
       firstName: "",
@@ -61,14 +64,18 @@ export default function AdminMembers() {
   }
 
   async function createMember() {
-    await api.post("/members", {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-    });
+    try {
+      await api.post("/members", {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+      });
 
-    setOpen(false);
-    loadMembers();
+      setOpen(false);
+      loadMembers();
+    } catch (err) {
+      handleApiError(err);
+    }
   }
 
   // ---------------------------------------------------------
@@ -76,6 +83,7 @@ export default function AdminMembers() {
   // ---------------------------------------------------------
   function openEditModal(member) {
     setEditMode(true);
+    setError("");
     setForm({
       id: member.id,
       firstName: member.firstName,
@@ -86,14 +94,33 @@ export default function AdminMembers() {
   }
 
   async function updateMember() {
-    await api.put(`/members/${form.id}`, {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-    });
+    try {
+      await api.put(`/members/${form.id}`, {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+      });
 
-    setOpen(false);
-    loadMembers();
+      setOpen(false);
+      loadMembers();
+    } catch (err) {
+      handleApiError(err);
+    }
+  }
+
+  // ---------------------------------------------------------
+  // Extract Backend Errors
+  // ---------------------------------------------------------
+  function handleApiError(err) {
+    if (err.response?.data?.errors) {
+      // ASP.NET validation dictionary → pick the first error message
+      const firstKey = Object.keys(err.response.data.errors)[0];
+      setError(err.response.data.errors[firstKey][0]);
+    } else if (err.response?.data?.message) {
+      setError(err.response.data.message);
+    } else {
+      setError("An unexpected error occurred.");
+    }
   }
 
   return (
@@ -114,7 +141,10 @@ export default function AdminMembers() {
             </Typography>
 
             <Typography>Email: {m.email}</Typography>
-            <Typography>Joined: {m.joinedAt?.slice(0, 10)}</Typography>
+
+            <Typography>
+              Joined: {m.joinedAt ? m.joinedAt.slice(0, 10) : "Unknown"}
+            </Typography>
 
             <Typography sx={{ mt: 1, fontWeight: "bold" }}>
               Loans: {m.loanCount ?? 0}
@@ -144,6 +174,12 @@ export default function AdminMembers() {
         <DialogTitle>{editMode ? "Edit Member" : "Add Member"}</DialogTitle>
 
         <DialogContent>
+          {error && (
+            <Typography color="error" sx={{ mb: 2 }}>
+              ⚠️ {error}
+            </Typography>
+          )}
+
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="First Name"
@@ -166,6 +202,7 @@ export default function AdminMembers() {
               name="email"
               value={form.email}
               onChange={handleChange}
+              type="email"
               fullWidth
             />
           </Stack>

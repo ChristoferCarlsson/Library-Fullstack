@@ -10,6 +10,9 @@ namespace Application.DTOs
         public string FullName => $"{FirstName} {LastName}";
         public required string Email { get; set; }
         public DateTime JoinedAt { get; set; }
+        public int LoanCount { get; set; }
+
+
     }
 
     public class CreateMemberDto

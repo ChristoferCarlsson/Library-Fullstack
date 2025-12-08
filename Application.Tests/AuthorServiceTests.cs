@@ -87,11 +87,17 @@ public class AuthorServiceTests
     public async Task Delete_ShouldRemoveAuthor()
     {
         var author = new Domain.Entities.Author { Id = 1 };
-        _repoMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(author);
+
+        _repoMock.Setup(r => r.GetByIdAsync(1))
+                 .ReturnsAsync(author);
+
+        _repoMock.Setup(r => r.GetBooksByAuthorIdAsync(1))
+                 .ReturnsAsync(new List<Domain.Entities.Book>());
 
         await _service.DeleteAsync(1);
 
         _repoMock.Verify(r => r.Remove(author), Times.Once);
         _repoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
     }
+
 }

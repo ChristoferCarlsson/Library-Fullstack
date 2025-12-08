@@ -10,5 +10,6 @@ namespace Application.Interfaces.Repositories
         void Update(Author author);
         void Remove(Author author);
         Task<bool> SaveChangesAsync();
+        Task<List<Book>> GetBooksByAuthorIdAsync(int authorId);
     }
 }
