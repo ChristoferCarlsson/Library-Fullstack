@@ -8,11 +8,7 @@ namespace Application.Interfaces.Services
         Task<LoanDto> GetByIdAsync(int id);
         Task<LoanDto> CreateAsync(CreateLoanDto dto);
         Task<LoanDto> UpdateAsync(int id, UpdateLoanDto dto);
-
-        // Optional delete
         Task DeleteAsync(int id);
-
-        // Optional advanced: return loan
         Task<LoanDto> ReturnBookAsync(int id);
     }
 }

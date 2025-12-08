@@ -42,7 +42,6 @@ namespace Api.Controllers
         }
 
         // GET: api/books/search
-        // Example: api/books/search?Title=Harry&Page=1&PageSize=10&SortBy=Title&Desc=false
         [HttpGet("search")]
         public async Task<ActionResult<PagedResult<BookDto>>> Search([FromQuery] BookQueryDto query)
         {

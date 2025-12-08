@@ -32,7 +32,6 @@ namespace Application.Services
 
             var dtoList = _mapper.Map<List<MemberDto>>(members);
 
-            // Inject loan count
             foreach (var dto in dtoList)
             {
                 var member = members.First(m => m.Id == dto.Id);

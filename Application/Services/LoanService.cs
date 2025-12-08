@@ -139,7 +139,7 @@ namespace Application.Services
             }
 
             var book = await _bookRepository.GetByIdAsync(loan.BookId);
-            if (book == null) // ✅ THIS is what the compiler wanted
+            if (book == null)
             {
                 _logger.LogError(
                     "Invariant violation: Book with ID {BookId} not found for Loan {LoanId}",

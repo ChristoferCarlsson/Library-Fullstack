@@ -27,7 +27,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -73,9 +72,6 @@ if (!app.Environment.IsEnvironment("Testing"))
     app.UseHttpsRedirection();
 }
 
-// --------------------------------------------------------
-// ENABLE CORS (must be BEFORE Authorization & MapControllers)
-// --------------------------------------------------------
 app.UseCors("AllowFrontend");
 
 app.UseAuthorization();
