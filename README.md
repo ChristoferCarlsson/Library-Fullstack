@@ -23,38 +23,6 @@ Database	Azure SQL Database
 Testing	xUnit, Moq, Real EF Integration Tests
 CI/CD	GitHub Actions (restore → build → test)
 Arkitektur	Clean-ish Architecture (Domain, Application, Infrastructure, API)
-🧩 Arkitektur
-📦 Projektstruktur
-Library/
-│
-├── Api/                    → Controllers, Startup, Middleware
-├── Application/            → Services, Interfaces, DTOs, Mapping
-├── Domain/                 → Entities (Book, Author, Member, Loan)
-├── Infrastructure/         → EF Core, Repositories, DbContext
-│
-├── Application.Tests/      → Unit tests for service layer
-└── Api.IntegrationTests/   → Integration tests for controllers
-
-🏛 Arkitekturdiagram
-┌─────────────────────────┐
-│        Presentation      │   → React Frontend
-└─────────────┬───────────┘
-              │ REST API calls
-┌─────────────▼───────────┐
-│        API Layer         │   → Controllers, Validation, Error Middleware
-└─────────────┬───────────┘
-              │ Calls services
-┌─────────────▼───────────┐
-│    Application Layer     │   → Services, DTOs, Mapping, Business Logic
-└─────────────┬───────────┘
-              │ Uses repositories
-┌─────────────▼───────────┐
-│   Infrastructure Layer   │   → EF Core, Repositories, SQL
-└─────────────┬───────────┘
-              │
-┌─────────────▼───────────┐
-│     Domain Layer         │   → Entities only
-└──────────────────────────┘
 
 🔧 Backend – Installation & Körning
 1️⃣ Klona projektet
