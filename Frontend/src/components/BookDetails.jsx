@@ -15,63 +15,84 @@ import {
   TextField,
 } from "@mui/material";
 import api from "../api/AxiosClient";
+import { validate, hasErrors } from "../utils/validate.js";
 
-export default function BookDetails() {
+export default function BookDetails({ onDataChanged }) {
   const { id } = useParams();
   const [book, setBook] = useState(null);
   const [loan, setLoan] = useState(null);
-  const [error, setError] = useState("");
+  const [apiError, setApiError] = useState("");
 
-  // Modal state
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-  });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "" });
+  const [fieldErrors, setFieldErrors] = useState({});
 
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  const notifyChanged = () => {
+    if (typeof onDataChanged === "function") onDataChanged();
+  };
 
-  async function loadBook() {
-    const res = await api.get(`/books/${id}`);
-    setBook(res.data);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
 
-    // Load ALL active loans and see if this user already has a loan for this book
-    const loanRes = await api.get(`/loans`);
-    const activeLoan = loanRes.data.find(
-      (l) => l.bookId === Number(id) && !l.returnDate
-    );
-    setLoan(activeLoan || null);
-  }
+  const loadBook = async () => {
+    try {
+      const res = await api.get(`/books/${id}`);
+      setBook(res.data);
+
+      // Fetch loan for this specific book only
+      const loanRes = await api.get(`/loans/book/${id}`);
+      setLoan(loanRes.data || null);
+    } catch (err) {
+      console.error("Failed to load book details", err);
+      setApiError("Failed to load book details.");
+    }
+  };
 
   useEffect(() => {
     loadBook();
-  }, []);
+  }, [id]);
 
-  // --------------------------------------------------------------
-  // Loan book logic (create or reuse existing member)
-  // --------------------------------------------------------------
-  async function loanBook() {
+  const validateLoanForm = (currentForm) => {
+    const errors = validate(currentForm, {
+      firstName: { required: true, label: "first name" },
+      lastName: { required: true, label: "last name" },
+      email: {
+        required: true,
+        label: "email",
+        email: true,
+        emailMessage: "Please enter a valid email address",
+      },
+    });
+
+    setFieldErrors(errors);
+    return !hasErrors(errors);
+  };
+
+  const loanBook = async () => {
     try {
-      setError("");
+      setApiError("");
 
-      // 1. Try to find existing member by email
-      const members = await api.get("/members");
-      let member = members.data.find((m) => m.email === form.email);
+      if (!validateLoanForm(form)) return;
 
-      // 2. If no existing member → create one
+      const email = form.email.trim().toLowerCase();
+
+      // Find existing member OR create a new one
+      const membersRes = await api.get("/members");
+      let member = membersRes.data.find((m) => m.email.toLowerCase() === email);
+
       if (!member) {
         const created = await api.post("/members", {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email,
         });
         member = created.data;
       }
 
-      // 3. Create the loan
+      // Create the loan
       await api.post("/loans", {
         bookId: Number(id),
         memberId: member.id,
@@ -79,31 +100,35 @@ export default function BookDetails() {
       });
 
       setOpen(false);
-      loadBook();
+      setForm({ firstName: "", lastName: "", email: "" });
+      setFieldErrors({});
+      await loadBook();
+      notifyChanged();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Loan failed.");
+      setApiError(err.response?.data?.message || "Loan failed.");
     }
-  }
+  };
 
-  async function returnBook() {
+  const returnBook = async () => {
     try {
-      setError("");
+      setApiError("");
       await api.put(`/loans/${loan.id}/return`);
-      loadBook();
+      await loadBook();
+      notifyChanged();
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Return failed.");
+      setApiError(err.response?.data?.message || "Return failed.");
     }
-  }
+  };
 
   if (!book) return <Typography>Loading...</Typography>;
 
   return (
     <Box sx={{ maxWidth: 800, mx: "auto", mt: 4 }}>
-      {error && (
+      {apiError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {apiError}
         </Alert>
       )}
 
@@ -119,16 +144,14 @@ export default function BookDetails() {
           </Typography>
 
           <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
-            {/* Loan Button */}
-            {book.copiesAvailable > 0 && !loan && (
+            {!loan && book.copiesAvailable > 0 && (
               <Button variant="contained" onClick={() => setOpen(true)}>
                 Loan Book
               </Button>
             )}
 
-            {/* Return Button */}
             {loan && (
-              <Button color="secondary" variant="outlined" onClick={returnBook}>
+              <Button variant="outlined" color="secondary" onClick={returnBook}>
                 Return Book
               </Button>
             )}
@@ -136,9 +159,6 @@ export default function BookDetails() {
         </CardContent>
       </Card>
 
-      {/* -------------------------------------------------------
-           LOAN MODAL
-      -------------------------------------------------------- */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>Loan This Book</DialogTitle>
 
@@ -150,6 +170,8 @@ export default function BookDetails() {
               value={form.firstName}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.firstName}
+              helperText={fieldErrors.firstName}
             />
 
             <TextField
@@ -158,6 +180,8 @@ export default function BookDetails() {
               value={form.lastName}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.lastName}
+              helperText={fieldErrors.lastName}
             />
 
             <TextField
@@ -167,6 +191,8 @@ export default function BookDetails() {
               value={form.email}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.email}
+              helperText={fieldErrors.email}
             />
           </Stack>
         </DialogContent>

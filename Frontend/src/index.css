@@ -1,0 +1,80 @@
+/* ===========================================
+   Global Reset
+=========================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===========================================
+   Base Document Styles
+=========================================== */
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  background-color: #f7f4ee;
+  color: #3b2f2f;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: block;
+}
+
+/* ===========================================
+   Links
+=========================================== */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ===========================================
+   Root App Layout
+=========================================== */
+#root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.5rem;
+}
+
+/* ===========================================
+   Text Utilities
+=========================================== */
+.section-title {
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.page-title {
+  font-weight: 700;
+  margin-bottom: 1.5rem !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+/* ===========================================
+   Logo Effects
+=========================================== */
+.logo {
+  will-change: filter;
+  transition: filter 300ms;
+}

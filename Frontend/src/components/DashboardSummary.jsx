@@ -2,25 +2,42 @@ import { useEffect, useState } from "react";
 import { Box, Grid, Paper, Typography, CircularProgress } from "@mui/material";
 import api from "../api/AxiosClient";
 
-export default function DashboardSummary() {
+export default function DashboardSummary({ version = 0 }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    async function loadDashboard() {
+    let active = true;
+
+    const loadDashboard = async () => {
       try {
+        setLoadError("");
+
+        if (!stats && version === 0) {
+          setLoading(true);
+        }
+
         const res = await api.get("/dashboard");
+        if (!active) return;
+
         setStats(res.data);
+        setLoading(false);
       } catch (err) {
         console.error("Failed to load dashboard", err);
+        if (!active) return;
+        setLoadError("Failed to load dashboard data.");
+        setLoading(false);
       }
-      setLoading(false);
-    }
+    };
 
     loadDashboard();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [version]);
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <Box sx={{ textAlign: "center", mt: 2 }}>
         <CircularProgress size={30} />
@@ -28,13 +45,13 @@ export default function DashboardSummary() {
     );
   }
 
-  if (!stats) {
+  if (loadError && !stats) {
     return (
-      <Typography sx={{ mt: 2, textAlign: "center" }}>
-        Failed to load dashboard data.
-      </Typography>
+      <Typography sx={{ mt: 2, textAlign: "center" }}>{loadError}</Typography>
     );
   }
+
+  if (!stats) return null;
 
   const items = [
     { label: "Total Books", value: stats.totalBooks },
@@ -44,17 +61,19 @@ export default function DashboardSummary() {
   ];
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", mt: 2, mb: 4 }}>
+    <Box sx={{ maxWidth: 900, mx: "auto", mt: 4, mb: 5, textAlign: "center" }}>
       <Grid container spacing={2}>
-        {items.map((item, idx) => (
-          <Grid item xs={6} sm={3} key={idx}>
+        {items.map((item) => (
+          <Grid item xs={6} sm={3} key={item.label}>
             <Paper
-              elevation={2}
+              elevation={1}
               sx={{
                 p: 2,
                 textAlign: "center",
-                borderRadius: 2,
-                backgroundColor: "#f0f4ff",
+                borderRadius: 4,
+                backgroundColor: "white",
+                boxShadow: "0 3px 8px rgba(0,0,0,0.10)",
+                mx: "auto",
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: "bold" }}>

@@ -14,93 +14,136 @@ import {
   MenuItem,
 } from "@mui/material";
 import api from "../../api/AxiosClient";
+import { validate, hasErrors } from "../../utils/validate.js";
 
-export default function AdminBooks() {
+export default function AdminBooks({ onDataChanged }) {
   const [books, setBooks] = useState([]);
   const [authors, setAuthors] = useState([]);
 
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-
-  const [error, setError] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const [form, setForm] = useState({
+  const emptyForm = {
     id: null,
     title: "",
     isbn: "",
     authorId: "",
     publishedDate: today,
     copiesTotal: 1,
-  });
+  };
 
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
+  const [form, setForm] = useState(emptyForm);
 
-  async function loadBooks() {
+  const notifyChanged = () => {
+    if (typeof onDataChanged === "function") onDataChanged();
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const resetModal = (isEdit = false, values = emptyForm) => {
+    setEditMode(isEdit);
+    setApiError("");
+    setFieldErrors({});
+    setForm(values);
+    setOpen(true);
+  };
+
+  const handleApiError = (err) => {
+    const res = err.response?.data;
+
+    if (res?.errors) {
+      const key = Object.keys(res.errors)[0];
+      setApiError(res.errors[key][0]);
+    } else {
+      setApiError(res?.message || "An unexpected error occurred.");
+    }
+  };
+
+  const loadBooks = async () => {
     const res = await api.get("/books");
     setBooks(res.data);
-  }
+  };
 
-  async function loadAuthors() {
+  const loadAuthors = async () => {
     const res = await api.get("/authors");
     setAuthors(res.data);
-  }
-
-  async function deleteBook(id) {
-    if (!window.confirm("Delete this book?")) return;
-    await api.delete(`/books/${id}`);
-    loadBooks();
-  }
+  };
 
   useEffect(() => {
     loadBooks();
     loadAuthors();
   }, []);
 
-  // -----------------------------------------------------------
-  // Create Modal
-  // -----------------------------------------------------------
-  function openCreateModal() {
-    setEditMode(false);
-    setError("");
-    setForm({
-      id: null,
-      title: "",
-      isbn: "",
-      authorId: "",
-      publishedDate: today,
-      copiesTotal: 1,
+  const validateBookForm = (data) => {
+    const errors = validate(data, {
+      title: { required: true, label: "Title" },
+      isbn: { required: true, label: "ISBN" },
+      authorId: { required: true, requiredMessage: "Please select an author" },
+      publishedDate: { required: true, label: "published date" },
+      copiesTotal: {
+        required: true,
+        label: "total copies",
+        min: 1,
+        minMessage: "Total copies must be at least 1",
+      },
     });
-    setOpen(true);
-  }
 
-  async function createBook() {
+    setFieldErrors(errors);
+    return !hasErrors(errors);
+  };
+
+  const createBook = async () => {
+    if (!validateBookForm(form)) return;
+
     try {
       await api.post("/books", {
-        title: form.title,
-        isbn: form.isbn,
+        title: form.title.trim(),
+        isbn: form.isbn.trim(),
         authorId: Number(form.authorId),
         publishedDate: form.publishedDate || today,
         copiesTotal: Number(form.copiesTotal),
       });
 
       setOpen(false);
-      loadBooks();
+      await loadBooks();
+      notifyChanged();
     } catch (err) {
       handleApiError(err);
     }
-  }
+  };
 
-  // -----------------------------------------------------------
-  // Edit Modal
-  // -----------------------------------------------------------
-  function openEditModal(book) {
-    setEditMode(true);
-    setError("");
-    setForm({
+  const updateBook = async () => {
+    if (!validateBookForm(form)) return;
+
+    try {
+      await api.put(`/books/${form.id}`, {
+        title: form.title.trim(),
+        isbn: form.isbn.trim(),
+        authorId: Number(form.authorId),
+        publishedDate: form.publishedDate,
+        copiesTotal: Number(form.copiesTotal),
+      });
+
+      setOpen(false);
+      await loadBooks();
+      notifyChanged();
+    } catch (err) {
+      handleApiError(err);
+    }
+  };
+
+  const openCreateModal = () => resetModal(false);
+
+  const openEditModal = (book) =>
+    resetModal(true, {
       id: book.id,
       title: book.title,
       isbn: book.isbn,
@@ -108,47 +151,23 @@ export default function AdminBooks() {
       publishedDate: book.publishedDate?.slice(0, 10) || today,
       copiesTotal: book.copiesTotal,
     });
-    setOpen(true);
-  }
 
-  async function updateBook() {
+  const deleteBook = async (id) => {
+    if (!window.confirm("Delete this book?")) return;
+    setApiError("");
+
     try {
-      await api.put(`/books/${form.id}`, {
-        title: form.title,
-        isbn: form.isbn,
-        authorId: Number(form.authorId),
-        publishedDate: form.publishedDate || today,
-        copiesTotal: Number(form.copiesTotal),
-      });
-
-      setOpen(false);
-      loadBooks();
+      await api.delete(`/books/${id}`);
+      await loadBooks();
+      notifyChanged();
     } catch (err) {
       handleApiError(err);
     }
-  }
-
-  // -----------------------------------------------------------
-  // Handle API Validation Errors
-  // -----------------------------------------------------------
-  function handleApiError(err) {
-    console.log("Error response:", err);
-
-    if (err.response?.data?.errors) {
-      // ASP.NET Core validation dictionary
-      const firstKey = Object.keys(err.response.data.errors)[0];
-      setError(err.response.data.errors[firstKey][0]);
-    } else if (err.response?.data?.message) {
-      // Custom exceptions (NotFoundException, ValidationException, etc.)
-      setError(err.response.data.message);
-    } else {
-      setError("An unexpected error occurred.");
-    }
-  }
+  };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+    <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", mt: 3, mb: 4 }}>
+      <Typography variant="h4" className="page-title">
         📘 Manage Books
       </Typography>
 
@@ -157,7 +176,10 @@ export default function AdminBooks() {
       </Button>
 
       {books.map((b) => (
-        <Card key={b.id} sx={{ mb: 2 }}>
+        <Card
+          key={b.id}
+          sx={{ mb: 2, "&:hover": { backgroundColor: "#faf7f2" } }}
+        >
           <CardContent>
             <Typography variant="h6">{b.title}</Typography>
             <Typography>Author: {b.authorFullName}</Typography>
@@ -170,7 +192,6 @@ export default function AdminBooks() {
               <Button variant="outlined" onClick={() => openEditModal(b)}>
                 Edit
               </Button>
-
               <Button
                 color="error"
                 variant="outlined"
@@ -183,14 +204,19 @@ export default function AdminBooks() {
         </Card>
       ))}
 
-      {/* ----------------- MODAL ------------------- */}
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
+      {/* Modal */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, backgroundColor: "#fffdf8" } }}
+      >
         <DialogTitle>{editMode ? "Edit Book" : "Add Book"}</DialogTitle>
 
         <DialogContent>
-          {error && (
+          {apiError && (
             <Typography color="error" sx={{ mb: 2 }}>
-              ⚠️ {error}
+              ⚠️ {apiError}
             </Typography>
           )}
 
@@ -201,6 +227,8 @@ export default function AdminBooks() {
               value={form.title}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.title}
+              helperText={fieldErrors.title}
             />
 
             <TextField
@@ -209,6 +237,8 @@ export default function AdminBooks() {
               value={form.isbn}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.isbn}
+              helperText={fieldErrors.isbn}
             />
 
             <TextField
@@ -218,7 +248,12 @@ export default function AdminBooks() {
               value={form.authorId}
               onChange={handleChange}
               fullWidth
+              error={!!fieldErrors.authorId}
+              helperText={fieldErrors.authorId}
             >
+              <MenuItem value="">
+                <em>Select an author…</em>
+              </MenuItem>
               {authors.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.fullName}
@@ -234,6 +269,8 @@ export default function AdminBooks() {
               onChange={handleChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
+              error={!!fieldErrors.publishedDate}
+              helperText={fieldErrors.publishedDate}
             />
 
             <TextField
@@ -242,14 +279,16 @@ export default function AdminBooks() {
               name="copiesTotal"
               value={form.copiesTotal}
               onChange={handleChange}
+              inputProps={{ min: 1 }}
               fullWidth
+              error={!!fieldErrors.copiesTotal}
+              helperText={fieldErrors.copiesTotal}
             />
           </Stack>
         </DialogContent>
 
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-
           <Button
             variant="contained"
             onClick={editMode ? updateBook : createBook}
