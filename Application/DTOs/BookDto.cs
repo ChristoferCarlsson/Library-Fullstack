@@ -48,10 +48,8 @@ namespace Application.DTOs
         [MaxLength(50)]
         public required string ISBN { get; set; }
 
-        [Range(0, int.MaxValue)]
-        public int CopiesAvailable { get; set; }
-
         [Range(1, int.MaxValue)]
         public int CopiesTotal { get; set; }
     }
+
 }

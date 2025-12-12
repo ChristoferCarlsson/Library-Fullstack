@@ -47,5 +47,12 @@ namespace Infrastructure.Repositories
         {
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<Member?> GetByIdWithLoansAsync(int id)
+        {
+            return await _context.Members
+                .Include(m => m.Loans)
+                .FirstOrDefaultAsync(m => m.Id == id);
+        }
+
     }
 }

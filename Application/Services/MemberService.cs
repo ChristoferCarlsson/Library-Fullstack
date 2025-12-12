@@ -11,15 +11,21 @@ namespace Application.Services
     public class MemberService : IMemberService
     {
         private readonly IMemberRepository _memberRepository;
+        private readonly IBookRepository _bookRepository;
+        private readonly ILoanRepository _loanRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<MemberService> _logger;
 
         public MemberService(
             IMemberRepository memberRepository,
+            IBookRepository bookRepository,
+            ILoanRepository loanRepository,
             IMapper mapper,
             ILogger<MemberService> logger)
         {
             _memberRepository = memberRepository;
+            _bookRepository = bookRepository;
+            _loanRepository = loanRepository;
             _mapper = mapper;
             _logger = logger;
         }
@@ -98,18 +104,28 @@ namespace Application.Services
 
         public async Task DeleteAsync(int id)
         {
-            var member = await _memberRepository.GetByIdAsync(id);
-
+            var member = await _memberRepository.GetByIdWithLoansAsync(id);
             if (member == null)
-            {
-                _logger.LogWarning("Attempted delete: Member with ID {Id} not found", id);
                 throw new NotFoundException($"Member with id {id} not found.");
+
+            foreach (var loan in member.Loans)
+            {
+                if (loan.ReturnDate == null)
+                {
+                    var book = await _bookRepository.GetByIdAsync(loan.BookId);
+                    if (book != null)
+                        book.CopiesAvailable++;
+                }
+
+                _loanRepository.Remove(loan);
             }
+
+            await _loanRepository.SaveChangesAsync();
+            await _bookRepository.SaveChangesAsync();
 
             _memberRepository.Remove(member);
             await _memberRepository.SaveChangesAsync();
-
-            _logger.LogWarning("Deleted member with ID {Id}", id);
         }
+
     }
 }

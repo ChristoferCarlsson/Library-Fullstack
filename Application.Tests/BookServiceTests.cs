@@ -74,7 +74,6 @@ public class BookServiceTests
             Title = "Updated",
             ISBN = "UPDATED-ISBN",
             PublishedDate = DateTime.UtcNow,
-            CopiesAvailable = 0,
             CopiesTotal = 1,
             AuthorId = 1
         };
