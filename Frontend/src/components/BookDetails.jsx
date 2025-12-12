@@ -39,12 +39,19 @@ export default function BookDetails({ onDataChanged }) {
 
   const loadBook = async () => {
     try {
-      const res = await api.get(`/books/${id}`);
-      setBook(res.data);
+      // 1. Load book details
+      const bookRes = await api.get(`/books/${id}`);
+      setBook(bookRes.data);
 
-      // Fetch loan for this specific book only
-      const loanRes = await api.get(`/loans/book/${id}`);
-      setLoan(loanRes.data || null);
+      // 2. Load all loans
+      const loansRes = await api.get("/loans");
+
+      // 3. Find ACTIVE loan for THIS book
+      const activeLoan = loansRes.data.find(
+        (l) => l.bookId === Number(id) && !l.returnDate
+      );
+
+      setLoan(activeLoan || null);
     } catch (err) {
       console.error("Failed to load book details", err);
       setApiError("Failed to load book details.");
@@ -93,7 +100,7 @@ export default function BookDetails({ onDataChanged }) {
       }
 
       // Create the loan
-      await api.post("/loans", {
+      await api.post("/Loans", {
         bookId: Number(id),
         memberId: member.id,
         dueDate: new Date(Date.now() + 12096e5).toISOString(), // 14 days
@@ -113,7 +120,7 @@ export default function BookDetails({ onDataChanged }) {
   const returnBook = async () => {
     try {
       setApiError("");
-      await api.put(`/loans/${loan.id}/return`);
+      await api.put(`/Loans/${loan.id}/return`);
       await loadBook();
       notifyChanged();
     } catch (err) {

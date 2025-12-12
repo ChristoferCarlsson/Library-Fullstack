@@ -87,34 +87,42 @@ namespace Application.Services
         {
             var book = await _bookRepository.GetByIdAsync(id);
             if (book == null)
-            {
-                _logger.LogWarning("Attempted update: Book with ID {Id} not found", id);
                 throw new NotFoundException($"Book with id {id} not found.");
-            }
 
             var author = await _authorRepository.GetByIdAsync(dto.AuthorId);
             if (author == null)
-            {
-                _logger.LogWarning("Attempted book update with invalid Author ID {AuthorId}", dto.AuthorId);
                 throw new NotFoundException($"Author with id {dto.AuthorId} not found.");
-            }
 
+            // Apply editable fields
             _mapper.Map(dto, book);
 
-            if (book.CopiesAvailable > dto.CopiesTotal)
+            int activeLoans = book.Loans.Count(l => l.ReturnDate == null);
+
+            if (dto.CopiesTotal < activeLoans)
             {
-                book.CopiesAvailable = dto.CopiesTotal;
+                throw new ValidationException(
+                    $"Copies total cannot be less than active loans ({activeLoans})."
+                );
             }
 
             book.CopiesTotal = dto.CopiesTotal;
+            book.CopiesAvailable = dto.CopiesTotal - activeLoans;
 
             _bookRepository.Update(book);
             await _bookRepository.SaveChangesAsync();
 
-            _logger.LogInformation("Updated book with ID {Id}", id);
+            _logger.LogInformation(
+                "Updated book {Id}: Total={Total}, ActiveLoans={Loans}, Available={Available}",
+                id,
+                book.CopiesTotal,
+                activeLoans,
+                book.CopiesAvailable
+            );
 
             return _mapper.Map<BookDto>(book);
         }
+
+
 
         public async Task DeleteAsync(int id)
         {
@@ -148,5 +156,27 @@ namespace Application.Services
                 TotalCount = result.TotalCount
             };
         }
+
+        public async Task FixAllBookAvailabilityAsync()
+        {
+            var books = await _bookRepository.GetAllAsync();
+
+            foreach (var book in books)
+            {
+                int activeLoans = book.Loans.Count(l => l.ReturnDate == null);
+
+                book.CopiesAvailable = Math.Max(
+                    0,
+                    book.CopiesTotal - activeLoans
+                );
+
+                _bookRepository.Update(book);
+            }
+
+            await _bookRepository.SaveChangesAsync();
+
+            _logger.LogWarning("Recalculated CopiesAvailable for all books");
+        }
+
     }
 }

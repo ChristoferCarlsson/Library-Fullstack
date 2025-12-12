@@ -11,5 +11,6 @@ namespace Application.Interfaces.Services
         Task<BookDto> UpdateAsync(int id, UpdateBookDto dto);
         Task DeleteAsync(int id);
         Task<PagedResult<BookDto>> QueryAsync(BookQueryDto query);
+        Task FixAllBookAvailabilityAsync();
     }
 }

@@ -28,6 +28,7 @@ namespace Infrastructure.Data.Repositories
         {
             return await _context.Books
                 .Include(b => b.Author)
+                .Include(b => b.Loans)
                 .ToListAsync();
         }
 

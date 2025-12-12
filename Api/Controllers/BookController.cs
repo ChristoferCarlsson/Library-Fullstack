@@ -80,5 +80,14 @@ namespace Api.Controllers
             await _bookService.DeleteAsync(id);
             return NoContent();
         }
+
+        // POST admin/fix-availability
+        [HttpPost("admin/fix-availability")]
+        public async Task<IActionResult> FixAvailability()
+        {
+            await _bookService.FixAllBookAvailabilityAsync();
+            return Ok(new { message = "Book availability recalculated." });
+        }
+
     }
 }

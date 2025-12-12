@@ -10,5 +10,7 @@ namespace Application.Interfaces.Repositories
         void Update(Member member);
         void Remove(Member member);
         Task<bool> SaveChangesAsync();
+        Task<Member?> GetByIdWithLoansAsync(int id);
+
     }
 }

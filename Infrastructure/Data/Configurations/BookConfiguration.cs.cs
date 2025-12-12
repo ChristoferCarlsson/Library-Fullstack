@@ -18,7 +18,6 @@ namespace Infrastructure.Data.Configurations
                     .IsRequired()
                    .HasMaxLength(50);
 
-            // 🔥 Explicitly define relationship again (optional but recommended)
             builder.HasOne(b => b.Author)
                    .WithMany(a => a.Books)
                    .HasForeignKey(b => b.AuthorId)
